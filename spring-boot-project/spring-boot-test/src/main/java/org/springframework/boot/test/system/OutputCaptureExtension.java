@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
  * parameter resolution} for a {@link CapturedOutput} instance which can be used to assert
  * that the correct output was written.
  * <p>
- * To use with {@link ExtendWith @ExtendWith}, inject the {@link CapturedOutput} as an
+ * To use, add {@link ExtendWith @ExtendWith} and inject the {@link CapturedOutput} as an
  * argument to your test class constructor or test method:
  *
  * <pre class="code">
@@ -54,8 +54,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
  * @since 2.2.0
  * @see CapturedOutput
  */
-public class OutputCaptureExtension implements BeforeAllCallback, AfterAllCallback,
-		BeforeEachCallback, AfterEachCallback, ParameterResolver {
+public class OutputCaptureExtension
+		implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
 	private final OutputCapture outputCapture = new OutputCapture();
 
@@ -84,14 +84,14 @@ public class OutputCaptureExtension implements BeforeAllCallback, AfterAllCallba
 	}
 
 	@Override
-	public boolean supportsParameter(ParameterContext parameterContext,
-			ExtensionContext extensionContext) throws ParameterResolutionException {
+	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+			throws ParameterResolutionException {
 		return CapturedOutput.class.equals(parameterContext.getParameter().getType());
 	}
 
 	@Override
-	public Object resolveParameter(ParameterContext parameterContext,
-			ExtensionContext extensionContext) throws ParameterResolutionException {
+	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+			throws ParameterResolutionException {
 		return this.outputCapture;
 	}
 

@@ -19,11 +19,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * @author Madhura Bhave
+ * @author Stephane Nicoll
  */
 public class BScanConfiguration {
 
-	@ConfigurationProperties(prefix = "b")
-	static class BProperties {
+	public interface BProperties {
+
+	}
+
+	@ConfigurationProperties(prefix = "b.first")
+	public static class BFirstProperties implements BProperties {
+
+	}
+
+	@ConfigurationProperties(prefix = "b.second")
+	public static class BSecondProperties implements BProperties {
 
 	}
 

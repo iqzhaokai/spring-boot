@@ -19,12 +19,13 @@ package org.springframework.boot.diagnostics.analyzer;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnJre;
+import org.junit.jupiter.api.condition.EnabledOnJre;
+import org.junit.jupiter.api.condition.JRE;
 
 import org.springframework.boot.diagnostics.FailureAnalysis;
-import org.springframework.boot.testsupport.runner.classpath.ClassPathOverrides;
-import org.springframework.boot.testsupport.runner.classpath.ModifiedClassPathRunner;
+import org.springframework.boot.testsupport.classpath.ClassPathOverrides;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -34,23 +35,33 @@ import static org.mockito.Mockito.mock;
  *
  * @author Andy Wilkinson
  */
-@RunWith(ModifiedClassPathRunner.class)
 @ClassPathOverrides("javax.servlet:servlet-api:2.5")
-public class NoSuchMethodFailureAnalyzerTests {
+class NoSuchMethodFailureAnalyzerTests {
 
 	@Test
-	public void noSuchMethodErrorIsAnalyzed() {
+	@EnabledOnJre({ JRE.JAVA_8, JRE.JAVA_11, JRE.JAVA_12 })
+	void noSuchMethodErrorIsAnalyzedJava8To12() {
+		testNoSuchMethodErrorFailureAnalysis(
+				"javax.servlet.ServletContext.addServlet(Ljava/lang/String;Ljavax/servlet/Servlet;)"
+						+ "Ljavax/servlet/ServletRegistration$Dynamic;");
+	}
+
+	@Test
+	@DisabledOnJre({ JRE.JAVA_8, JRE.JAVA_11, JRE.JAVA_12 })
+	void noSuchMethodErrorIsAnalyzedJava13AndLater() {
+		testNoSuchMethodErrorFailureAnalysis(
+				"javax/servlet/ServletContext.addServlet(Ljava/lang/String;Ljavax/servlet/Servlet;)"
+						+ "Ljavax/servlet/ServletRegistration$Dynamic;");
+	}
+
+	private void testNoSuchMethodErrorFailureAnalysis(String expectedMethodRepresentation) {
 		Throwable failure = createFailure();
 		assertThat(failure).isNotNull();
 		FailureAnalysis analysis = new NoSuchMethodFailureAnalyzer().analyze(failure);
 		assertThat(analysis).isNotNull();
 		assertThat(analysis.getDescription())
-				.contains(NoSuchMethodFailureAnalyzerTests.class.getName()
-						+ ".createFailure(")
-				.contains("javax.servlet.ServletContext.addServlet"
-						+ "(Ljava/lang/String;Ljavax/servlet/Servlet;)"
-						+ "Ljavax/servlet/ServletRegistration$Dynamic;")
-				.contains("class, javax.servlet.ServletContext,");
+				.contains(NoSuchMethodFailureAnalyzerTests.class.getName() + ".createFailure(")
+				.contains(expectedMethodRepresentation).contains("class, javax.servlet.ServletContext,");
 	}
 
 	private Throwable createFailure() {

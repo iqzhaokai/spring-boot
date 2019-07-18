@@ -16,14 +16,16 @@
 
 package org.springframework.boot.autoconfigure.data.elasticsearch;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.boot.testsupport.testcontainers.ElasticsearchContainer;
+import org.springframework.boot.testsupport.testcontainers.DisabledWithoutDockerTestcontainers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -43,73 +45,71 @@ import static org.mockito.Mockito.mock;
  * @author Artur Konczak
  * @author Brian Clozel
  */
-@Testcontainers
-public class ElasticsearchDataAutoConfigurationTests {
+@DisabledWithoutDockerTestcontainers
+class ElasticsearchDataAutoConfigurationTests {
 
 	@Container
-	public static ElasticsearchContainer elasticsearch = new ElasticsearchContainer();
+	static final ElasticsearchContainer elasticsearch = new ElasticsearchContainer();
 
-	private ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-			.withConfiguration(AutoConfigurations.of(ElasticsearchAutoConfiguration.class,
-					RestClientAutoConfiguration.class,
-					ReactiveRestClientAutoConfiguration.class,
-					ElasticsearchDataAutoConfiguration.class));
+	private ApplicationContextRunner contextRunner = new ApplicationContextRunner().withConfiguration(
+			AutoConfigurations.of(ElasticsearchAutoConfiguration.class, RestClientAutoConfiguration.class,
+					ReactiveRestClientAutoConfiguration.class, ElasticsearchDataAutoConfiguration.class));
+
+	@BeforeEach
+	void setUp() {
+		System.setProperty("es.set.netty.runtime.available.processors", "false");
+	}
+
+	@AfterEach
+	void tearDown() {
+		System.clearProperty("es.set.netty.runtime.available.processors");
+	}
 
 	@Test
-	public void defaultTransportBeansAreRegistered() {
+	void defaultTransportBeansAreRegistered() {
 		this.contextRunner
 				.withPropertyValues(
-						"spring.data.elasticsearch.cluster-nodes:localhost:"
-								+ elasticsearch.getMappedTransportPort(),
+						"spring.data.elasticsearch.cluster-nodes:" + elasticsearch.getTcpHost().getHostString() + ":"
+								+ elasticsearch.getTcpHost().getPort(),
 						"spring.data.elasticsearch.cluster-name:docker-cluster")
-				.run((context) -> assertThat(context)
-						.hasSingleBean(ElasticsearchTemplate.class)
+				.run((context) -> assertThat(context).hasSingleBean(ElasticsearchTemplate.class)
 						.hasSingleBean(SimpleElasticsearchMappingContext.class)
 						.hasSingleBean(ElasticsearchConverter.class));
 	}
 
 	@Test
-	public void defaultTransportBeansNotRegisteredIfNoTransportClient() {
-		this.contextRunner.run((context) -> assertThat(context)
-				.doesNotHaveBean(ElasticsearchTemplate.class));
+	void defaultTransportBeansNotRegisteredIfNoTransportClient() {
+		this.contextRunner.run((context) -> assertThat(context).doesNotHaveBean(ElasticsearchTemplate.class));
 	}
 
 	@Test
-	public void defaultRestBeansRegistered() {
-		this.contextRunner.run((context) -> assertThat(context)
-				.hasSingleBean(ElasticsearchRestTemplate.class)
-				.hasSingleBean(ReactiveElasticsearchTemplate.class)
-				.hasSingleBean(ElasticsearchConverter.class)
-				.hasSingleBean(SimpleElasticsearchMappingContext.class)
-				.hasSingleBean(EntityMapper.class)
+	void defaultRestBeansRegistered() {
+		this.contextRunner.run((context) -> assertThat(context).hasSingleBean(ElasticsearchRestTemplate.class)
+				.hasSingleBean(ReactiveElasticsearchTemplate.class).hasSingleBean(ElasticsearchConverter.class)
+				.hasSingleBean(SimpleElasticsearchMappingContext.class).hasSingleBean(EntityMapper.class)
 				.hasSingleBean(ElasticsearchConverter.class));
 	}
 
 	@Test
-	public void customTransportTemplateShouldBeUsed() {
-		this.contextRunner.withUserConfiguration(CustomTransportTemplate.class)
-				.run((context) -> assertThat(context)
-						.getBeanNames(ElasticsearchTemplate.class).hasSize(1)
-						.contains("elasticsearchTemplate"));
+	void customTransportTemplateShouldBeUsed() {
+		this.contextRunner.withUserConfiguration(CustomTransportTemplate.class).run((context) -> assertThat(context)
+				.getBeanNames(ElasticsearchTemplate.class).hasSize(1).contains("elasticsearchTemplate"));
 	}
 
 	@Test
-	public void customRestTemplateShouldBeUsed() {
-		this.contextRunner.withUserConfiguration(CustomRestTemplate.class)
-				.run((context) -> assertThat(context)
-						.getBeanNames(ElasticsearchRestTemplate.class).hasSize(1)
-						.contains("elasticsearchTemplate"));
+	void customRestTemplateShouldBeUsed() {
+		this.contextRunner.withUserConfiguration(CustomRestTemplate.class).run((context) -> assertThat(context)
+				.getBeanNames(ElasticsearchRestTemplate.class).hasSize(1).contains("elasticsearchTemplate"));
 	}
 
 	@Test
-	public void customReactiveRestTemplateShouldBeUsed() {
+	void customReactiveRestTemplateShouldBeUsed() {
 		this.contextRunner.withUserConfiguration(CustomReactiveRestTemplate.class)
-				.run((context) -> assertThat(context)
-						.getBeanNames(ReactiveElasticsearchTemplate.class).hasSize(1)
+				.run((context) -> assertThat(context).getBeanNames(ReactiveElasticsearchTemplate.class).hasSize(1)
 						.contains("reactiveElasticsearchTemplate"));
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	static class CustomTransportTemplate {
 
 		@Bean
@@ -119,7 +119,7 @@ public class ElasticsearchDataAutoConfigurationTests {
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	static class CustomRestTemplate {
 
 		@Bean
@@ -129,7 +129,7 @@ public class ElasticsearchDataAutoConfigurationTests {
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	static class CustomReactiveRestTemplate {
 
 		@Bean

@@ -324,6 +324,7 @@
 										<icons>font</icons>
 										<stylesdir>css/</stylesdir>
 										<stylesheet>style.css</stylesheet>
+										<attribute-missing>warn</attribute-missing>
 									</attributes>
 									<logHandler>
 										<outputToConsole>true</outputToConsole>
@@ -356,11 +357,6 @@
 							</attributes>
 						</configuration>
 						<dependencies>
-							<dependency>
-								<groupId>org.asciidoctor</groupId>
-								<artifactId>asciidoctorj-pdf</artifactId>
-								<version>1.5.0-alpha.11</version>
-							</dependency>
 							<dependency>
 								<groupId>io.spring.asciidoctor</groupId>
 								<artifactId>spring-asciidoctor-extensions</artifactId>
